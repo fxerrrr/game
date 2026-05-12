@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+    <title>科技星球·陨石守卫战</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+
+        body {
+            background: #0a102b;
+            background-image: radial-gradient(circle at 50% 50%, #152048 0%, #05091f 100%);
+            color: #fff;
+            /* 固定适配荣耀平板5 1920×1200 横屏 */
+            width: 1920px;
+            height: 1200px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 整体容器缩小居中 */
+        .container {
+            width: 1400px;
+            height: 900px;
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        /* 左侧规则栏 加大字体 */
+        .rule-box {
+            width: 320px;
+            background: rgba(255,255,255,0.1);
+            padding: 35px 25px;
+            border-radius: 16px;
+            line-height: 2.4;
+            font-size: 22px;
+        }
+
+        .rule-box h3 {
+            font-size: 28px;
+            color: #73d2ff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* 右侧游戏区 */
+        .game-main {
+            flex: 1;
+            text-align: center;
+            padding-top: 30px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #73d2ff;
+            text-shadow: 0 0 10px #4096ff;
+        }
+
+        .info {
+            font-size: 22px;
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+
+        .task {
+            font-size: 24px;
+            color: #ffd700;
+            font-weight: bold;
+            margin: 12px 0;
+        }
+
+        #gameContainer {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            width: 520px;
+            margin: 30px auto;
+        }
+
+        .hole {
+            width: 150px;
+            height: 150px;
+            background: #101a3d;
+            border-radius: 20px;
+            border: 2px solid #2a4386;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .item {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 100%;
+            transition: top 0.2s ease;
+            font-size: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item.show {
+            top: 0;
+        }
+
+        .btn {
+            padding: 14px 35px;
+            font-size: 22px;
+            background: #2374e1;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            margin: 25px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧大号规则栏 -->
+        <div class="rule-box">
+            <h3>游戏规则</h3>
+            <p>🛸 点击☄️陨石、👾病毒消除</p>
+            <p>🤖 禁止点击友好机器人</p>
+            <p>误点机器人直接闯关失败</p>
+            <p>每关完成指定消除数量</p>
+            <p>限时结束未完成则失败</p>
+            <p>共5关，难度逐步提升</p>
+        </div>
+
+        <!-- 游戏主体 -->
+        <div class="game-main">
+            <h1>科技星球·陨石守卫战</h1>
+            <div class="info">
+                关卡：<span id="level">1</span> &nbsp;&nbsp;
+                剩余时间：<span id="time">30</span> 秒<br>
+                <div class="task">通关任务：<span id="task">消除8个陨石/病毒</span></div>
+                已完成进度：<span id="taskProgress">0</span>
+            </div>
+
+            <div id="gameContainer">
+                <div class="hole"><div class="item"></div></div>
+                <div class="hole"><div class="item"></div></div>
+                <div class="hole"><div class="item"></div></div>
+                <div class="hole"><div class="item"></div></div>
+                <div class="hole"><div class="item"></div></div>
+                <div class="hole"><div class="item"></div></div>
+                <div class="hole"><div class="item"></div></div>
+                <div class="hole"><div class="item"></div></div>
+                <div class="hole"><div class="item"></div></div>
+            </div>
+
+            <div>
+                <button class="btn" id="startBtn">开始游戏</button>
+                <button class="btn" id="resetBtn">重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ROBOT = '🤖';
+        const METEOR = '☄️';
+        const VIRUS = '👾';
+
+        const levelConfig = [
+            { taskNum: 8,  time: 30, interval: 1700, stay: 1300, maxNum: 2, robotRate: 0.12 },
+            { taskNum: 10, time: 28, interval: 1500, stay: 1200, maxNum: 2, robotRate: 0.15 },
+            { taskNum: 12, time: 26, interval: 1300, stay: 1100, maxNum: 3, robotRate: 0.20 },
+            { taskNum: 14, time: 25, interval: 1100, stay: 1000, maxNum: 3, robotRate: 0.25 },
+            { taskNum: 16, time: 23, interval: 900,  stay: 900,  maxNum: 3, robotRate: 0.30 }
+        ];
+
+        let currentLevel = 1;
+        let timeLeft = 30;
+        let currentTaskNum = 0;
+        let timer = null;
+        let gameTimer = null;
+        let isPlaying = false;
+
+        const holes = document.querySelectorAll('.item');
+        const levelDom = document.getElementById('level');
+        const timeDom = document.getElementById('time');
+        const taskDom = document.getElementById('task');
+        const taskProgressDom = document.getElementById('taskProgress');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function clearAllHoles(){holes.forEach(i=>{i.classList.remove('show');i.innerText=''})}
+        function getRandomItem(){let c=levelConfig[currentLevel-1],r=Math.random();return r<c.robotRate?ROBOT:r<c.robotRate+0.5?METEOR:VIRUS}
+        function getRandomEmptyHole(){let e=[];holes.forEach((i,x)=>{if(!i.classList.contains('show'))e.push(x)});return e.length?e[Math.floor(Math.random()*e.length)]:-1}
+
+        function startRefresh(){
+            let c=levelConfig[currentLevel-1];
+            if(gameTimer)clearInterval(gameTimer);
+            gameTimer=setInterval(()=>{
+                if(!isPlaying)return;
+                let n=Math.floor(Math.random()*c.maxNum)+1;
+                for(let i=0;i<n;i++){
+                    let x=getRandomEmptyHole();
+                    if(x===-1)break;
+                    let it=holes[x];
+                    it.innerText=getRandomItem();
+                    it.classList.add('show');
+                    setTimeout(()=>it.classList.remove('show'),c.stay);
+                }
+            },c.interval);
+        }
+
+        function startCountDown(){
+            let c=levelConfig[currentLevel-1];
+            timeLeft=c.time;timeDom.innerText=timeLeft;
+            if(timer)clearInterval(timer);
+            timer=setInterval(()=>{
+                timeLeft--;timeDom.innerText=timeLeft;
+                if(timeLeft<=0)endGame(`时间耗尽！未能完成${c.taskNum}个消除任务，闯关失败`);
+            },1000);
+        }
+
+        function initCurrentLevel(){
+            let c=levelConfig[currentLevel-1];
+            currentTaskNum=0;
+            levelDom.innerText=currentLevel;
+            taskDom.innerText=`消除${c.taskNum}个陨石/病毒`;
+            taskProgressDom.innerText=currentTaskNum;
+        }
+
+        function endGame(msg){
+            isPlaying=false;
+            clearInterval(timer);clearInterval(gameTimer);
+            alert(msg);clearAllHoles();
+            currentLevel=1;initCurrentLevel();
+            timeDom.innerText=levelConfig[0].time;
+        }
+
+        function nextLevel(){
+            if(currentLevel>=5){endGame('🎉 恭喜通关全部5关，成功守护科技星球！');return}
+            alert(`✅ 第${currentLevel}关通关成功！即将进入下一关`);
+            currentLevel++;initCurrentLevel();clearAllHoles();
+            startCountDown();startRefresh();
+        }
+
+        holes.forEach(it=>{
+            it.parentElement.addEventListener('click',()=>{
+                if(!isPlaying||!it.classList.contains('show'))return;
+                let txt=it.innerText;
+                if(txt===ROBOT){endGame('❌ 误点友好机器人，闯关失败！')}
+                else{
+                    currentTaskNum++;taskProgressDom.innerText=currentTaskNum;
+                    it.classList.remove('show');
+                    if(currentTaskNum>=levelConfig[currentLevel-1].taskNum)setTimeout(nextLevel,400);
+                }
+            });
+        });
+
+        startBtn.addEventListener('click',()=>{
+            if(isPlaying)return;
+            isPlaying=true;currentLevel=1;
+            initCurrentLevel();clearAllHoles();
+            startCountDown();startRefresh();
+        });
+
+        resetBtn.addEventListener('click',()=>endGame('🔄 已重置游戏，请重新开始挑战'));
+    </script>
+</body>
+</html>
