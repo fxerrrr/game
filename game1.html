@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>解缠 · 六一智力挑战 | 解开所有绳结</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        /* 清爽浅色夏日背景 */
+        body {
+            background: linear-gradient(145deg, #c7e9fb 0%, #9fd3e7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: #fffef7;
+            border-radius: 72px;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2), inset 0 1px 4px rgba(255,255,250,0.9);
+            padding: 20px 24px 28px 24px;
+            transition: all 0.2s;
+        }
+
+        .canvas-wrapper {
+            background: #fffdf5;
+            border-radius: 48px;
+            box-shadow: inset 0 0 0 3px #fff2df, 0 12px 24px rgba(0, 0, 0, 0.12);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 40px;
+            cursor: grab;
+            touch-action: none;
+            width: 100%;
+            height: auto;
+            background: #fffffa;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            gap: 12px;
+            padding: 0 10px;
+        }
+
+        .title-area {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .game-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #2c7da0, #1f9e6d);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.05);
+            letter-spacing: 2px;
+        }
+
+        .level-badge {
+            background: #ffecb3;
+            border-radius: 60px;
+            padding: 6px 18px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #c25d2e;
+            box-shadow: inset 0 1px 3px #ffeecc, 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .timer-box {
+            background: #2a5f6e;
+            padding: 8px 20px;
+            border-radius: 48px;
+            color: #f9f2cf;
+            font-weight: bold;
+            font-size: 1.6rem;
+            font-family: monospace;
+            letter-spacing: 2px;
+            box-shadow: inset 0 1px 3px #569eb3, 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .status {
+            background: #fae6c3;
+            border-radius: 32px;
+            padding: 6px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #c26a2e;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 20px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            background: #fef0da;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 60px;
+            color: #4e6b3c;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 5px 0 #bcaa82;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #bcaa82;
+        }
+
+        .btn-primary {
+            background: #f7b45a;
+            color: #2b4421;
+            box-shadow: 0 5px 0 #bd741f;
+        }
+
+        .rule-btn {
+            background: #d9e0b5;
+            box-shadow: 0 5px 0 #9aa86e;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #6f9f8c;
+            margin-top: 16px;
+            font-weight: 500;
+        }
+
+        .complete-toast {
+            position: fixed;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #f7bc6c;
+            color: #2c4720;
+            font-weight: bold;
+            font-size: 1.8rem;
+            padding: 20px 40px;
+            border-radius: 80px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.25);
+            z-index: 200;
+            white-space: nowrap;
+            backdrop-filter: blur(8px);
+            border: 2px solid #ffeca2;
+            animation: bouncePop 0.4s ease;
+        }
+
+        @keyframes bouncePop {
+            0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0;}
+            80% { transform: translate(-50%, -50%) scale(1.05);}
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1;}
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+        .modal-card {
+            background: #fff7e8;
+            max-width: 80%;
+            width: 460px;
+            border-radius: 64px;
+            padding: 30px 28px;
+            text-align: center;
+            box-shadow: 0 30px 35px rgba(0,0,0,0.3);
+            border: 1px solid #ffe1b3;
+        }
+        .modal-card h3 {
+            font-size: 2rem;
+            margin: 0 0 16px 0;
+            color: #dd8844;
+        }
+        .modal-card p {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            color: #4c6e3c;
+        }
+        .close-modal {
+            margin-top: 24px;
+            background: #f5bc70;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 800px) {
+            .game-container { padding: 14px 16px 20px; border-radius: 48px; }
+            .btn { padding: 8px 16px; font-size: 1rem; }
+            .timer-box { font-size: 1.3rem; padding: 4px 16px; }
+            .game-title { font-size: 1.6rem; }
+            .level-badge { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="game-header">
+        <div class="title-area">
+            <div class="game-title">✨ 解缠 ✨</div>
+            <div class="level-badge" id="levelIndicator">第1关 · 小四边形</div>
+            <div class="status" id="statusIcon">🔘 未解开</div>
+        </div>
+        <div class="timer-box" id="timerDisplay">00:00</div>
+    </div>
+
+    <div class="canvas-wrapper">
+        <canvas id="gameCanvas" width="900" height="650" style="width:100%; height:auto; max-width:1000px; aspect-ratio:900/650"></canvas>
+    </div>
+
+    <div class="button-bar">
+        <button class="btn" id="prevLevelBtn">◀ 上一关</button>
+        <button class="btn" id="newGameBtn">下一关 ▶</button>
+        <button class="btn" id="restartBtn">🔄 重开本关</button>
+        <button class="btn" id="undoBtn">↩️ 撤销</button>
+        <button class="btn" id="redoBtn">↪️ 重做</button>
+        <button class="btn rule-btn" id="ruleBtn">📖 玩法规则</button>
+    </div>
+    <div class="footer">
+        <span>🎯 拖动圆点，让所有线段都不再交叉</span>
+        <span>🧩 7个独特造型，难度从易到难！</span>
+    </div>
+</div>
+
+<div id="ruleModal" class="modal">
+    <div class="modal-card">
+        <h3>🧩 解缠 · 游戏规则</h3>
+        <p>✨ 用手指拖动彩色圆点（节点）<br>
+        🧵 移动它们的位置，尝试让所有连接的线段<br>
+        ✅ 都不再互相交叉（端点和端点碰在一起不算交叉）<br>
+        🎉 当画面上没有任何交叉的线段时，你就成功解开了这个缠结！<br>
+        💡 一共7个关卡，难度从低到高，每个关卡都有独特的缠结方式。<br>
+        ⏪ 你可以随时撤销和重做，也可以重开当前关卡，或者切换上一关/下一关。</p>
+        <button class="close-modal" id="closeModalBtn">开始挑战</button>
+    </div>
+</div>
+
+<script>
+    (function(){
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const CANVAS_W = 900;
+        const CANVAS_H = 650;
+        canvas.width = CANVAS_W;
+        canvas.height = CANVAS_H;
+        const NODE_RADIUS = 22;
+
+        // ========== 7个独特关卡，按难度从低到高排序，更适合小学生逐步挑战 ==========
+        // 难度顺序: 小四边形(极易) → X形交叉(简单) → 五角星(稍复杂) → 六边形花园(中等) 
+        // → 蝴蝶结(中等偏上) → 环形网(较难) → 终极挑战(最难)
+        const levels = [
+            {   // 关0: 小四边形 (完全图K4，仅需拉开对角线)
+                name: "小四边形",
+                nodes: [
+                    { x: 220, y: 200 }, { x: 680, y: 180 }, { x: 720, y: 480 }, { x: 200, y: 460 }
+                ],
+                edges: [[0,1],[1,2],[2,3],[3,0], [0,2], [1,3]],
+                hint: "拖动四个角点，让中间的两条交叉线分开"
+            },
+            {   // 关1: X形交叉 (4个节点，纯X交叉，解法对称)
+                name: "X形交叉",
+                nodes: [
+                    { x: 200, y: 180 }, { x: 700, y: 180 }, { x: 700, y: 520 }, { x: 200, y: 520 }
+                ],
+                edges: [[0,1],[1,2],[2,3],[3,0], [0,2], [1,3]],
+                hint: "把对角线的两个端点拉远，就能避免X形交叉"
+            },
+            {   // 关2: 五角星 (经典五芒星，中心交叉多)
+                name: "五角星",
+                nodes: [
+                    { x: 450, y: 120 }, { x: 700, y: 260 }, { x: 600, y: 500 }, { x: 300, y: 500 }, { x: 200, y: 260 }
+                ],
+                edges: [[0,1],[1,2],[2,3],[3,4],[4,0], [0,2],[1,3],[2,4],[3,0],[4,1]],
+                hint: "把星星内部的五个点向周围移动，避免线条彼此穿过"
+            },
+            {   // 关3: 六边形花园 (六边形加两条内部对角线)
+                name: "六边形花园",
+                nodes: [
+                    { x: 280, y: 180 }, { x: 520, y: 140 }, { x: 730, y: 260 }, { x: 670, y: 470 }, { x: 400, y: 520 }, { x: 170, y: 380 }
+                ],
+                edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0], [0,3], [2,5]],
+                hint: "移动最上方和最下方的点，让长的对角线不再交叉"
+            },
+            {   // 关4: 蝴蝶结 (对称交叉，需左右拉开)
+                name: "蝴蝶结",
+                nodes: [
+                    { x: 230, y: 220 }, { x: 450, y: 160 }, { x: 670, y: 220 }, { x: 670, y: 440 }, { x: 450, y: 490 }, { x: 230, y: 440 }
+                ],
+                edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0], [1,4], [0,3]],
+                hint: "把左右两边的圆点向外拉，让中间交叉的线条散开"
+            },
+            {   // 关5: 环形网 (7个节点，周边连线密集，中心交叉)
+                name: "环形网",
+                nodes: [
+                    { x: 280, y: 200 }, { x: 500, y: 130 }, { x: 720, y: 220 }, { x: 740, y: 400 },
+                    { x: 570, y: 530 }, { x: 350, y: 550 }, { x: 160, y: 420 }
+                ],
+                edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0], [1,5], [2,6], [0,4]],
+                hint: "像解开渔网一样，把每个点轻轻拉到空旷处"
+            },
+            {   // 关6: 终极挑战 (7个节点，最复杂的交叉网络)
+                name: "终极挑战",
+                nodes: [
+                    { x: 300, y: 190 }, { x: 500, y: 140 }, { x: 700, y: 240 }, { x: 650, y: 460 },
+                    { x: 420, y: 540 }, { x: 220, y: 480 }, { x: 160, y: 320 }
+                ],
+                edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0], [1,4], [2,5], [0,4], [3,6]],
+                hint: "最后的考验，耐心把每个交叉点理清楚"
+            }
+        ];
+
+        let currentLevelIdx = 0;
+        let currentNodes = [];
+        let currentEdges = [];
+        let originalNodes = [];
+
+        let gameActive = true;
+        let winFlag = false;
+        let startTime = null;
+        let timerInterval = null;
+        let elapsedSeconds = 0;
+
+        let historyStack = [];
+        let historyIndex = -1;
+        const MAX_HISTORY = 50;
+
+        let draggingNode = null;
+        let dragOffsetX = 0, dragOffsetY = 0;
+
+        // DOM
+        const levelIndicator = document.getElementById('levelIndicator');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const statusIcon = document.getElementById('statusIcon');
+        const prevLevelBtn = document.getElementById('prevLevelBtn');
+        const nextLevelBtn = document.getElementById('newGameBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const ruleBtn = document.getElementById('ruleBtn');
+        const modal = document.getElementById('ruleModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        // ---------- 几何相交检测（精确算法，忽略共享端点）----------
+        function orientation(p, q, r) {
+            const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+            if (Math.abs(val) < 1e-8) return 0;
+            return val > 0 ? 1 : 2;
+        }
+        function onSegment(p, q, r) {
+            return (q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
+                    q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y));
+        }
+        function segmentsIntersect(p1, p2, p3, p4) {
+            if ((p1.x===p3.x && p1.y===p3.y) || (p1.x===p4.x && p1.y===p4.y) ||
+                (p2.x===p3.x && p2.y===p3.y) || (p2.x===p4.x && p2.y===p4.y)) return false;
+            const o1 = orientation(p1, p2, p3);
+            const o2 = orientation(p1, p2, p4);
+            const o3 = orientation(p3, p4, p1);
+            const o4 = orientation(p3, p4, p2);
+            if (o1 !== o2 && o3 !== o4) return true;
+            if (o1 === 0 && onSegment(p1, p3, p2)) return true;
+            if (o2 === 0 && onSegment(p1, p4, p2)) return true;
+            if (o3 === 0 && onSegment(p3, p1, p4)) return true;
+            if (o4 === 0 && onSegment(p3, p2, p4)) return true;
+            return false;
+        }
+
+        function hasAnyIntersection() {
+            const m = currentEdges.length;
+            for (let i = 0; i < m; i++) {
+                const e1 = currentEdges[i];
+                const p1 = currentNodes[e1[0]];
+                const p2 = currentNodes[e1[1]];
+                for (let j = i+1; j < m; j++) {
+                    const e2 = currentEdges[j];
+                    const p3 = currentNodes[e2[0]];
+                    const p4 = currentNodes[e2[1]];
+                    if (segmentsIntersect(p1, p2, p3, p4)) return true;
+                }
+            }
+            return false;
+        }
+
+        function handleVictory() {
+            if (winFlag) return;
+            if (!hasAnyIntersection()) {
+                winFlag = true;
+                gameActive = false;
+                if (timerInterval) clearInterval(timerInterval);
+                showWinToast();
+                statusIcon.innerHTML = "🎉 完全解开！ 🎉";
+                statusIcon.style.background = "#c8e6a0";
+                drawCanvas();
+            }
+        }
+
+        function showWinToast() {
+            const toast = document.createElement('div');
+            toast.className = 'complete-toast';
+            toast.innerText = `✨ 恭喜过关！ 用时 ${formatTime(elapsedSeconds)} ✨`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2300);
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            startTime = Date.now() - elapsedSeconds * 1000;
+            timerInterval = setInterval(() => {
+                if (!winFlag && gameActive) {
+                    const now = Date.now();
+                    elapsedSeconds = Math.floor((now - startTime) / 1000);
+                    timerDisplay.innerText = formatTime(elapsedSeconds);
+                } else if (!winFlag) {
+                    timerDisplay.innerText = formatTime(elapsedSeconds);
+                }
+            }, 200);
+        }
+        function stopTimer() { if (timerInterval) clearInterval(timerInterval); timerInterval = null; }
+        function resetTimerForNew() {
+            stopTimer();
+            elapsedSeconds = 0;
+            timerDisplay.innerText = formatTime(0);
+            startTimer();
+        }
+        function formatTime(sec) { 
+            const m = Math.floor(sec/60); 
+            const s = sec%60; 
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; 
+        }
+
+        // 历史管理
+        function pushToHistory() {
+            const snapshot = currentNodes.map(n => ({ x: n.x, y: n.y }));
+            if (historyIndex < historyStack.length - 1) {
+                historyStack = historyStack.slice(0, historyIndex + 1);
+            }
+            historyStack.push(snapshot);
+            if (historyStack.length > MAX_HISTORY) historyStack.shift();
+            historyIndex = historyStack.length - 1;
+        }
+
+        function loadHistorySnapshot(index) {
+            if (index < 0 || index >= historyStack.length) return false;
+            const snap = historyStack[index];
+            for (let i = 0; i < currentNodes.length; i++) {
+                currentNodes[i].x = snap[i].x;
+                currentNodes[i].y = snap[i].y;
+            }
+            historyIndex = index;
+            drawCanvas();
+            const hasCross = hasAnyIntersection();
+            if (!hasCross && !winFlag) {
+                winFlag = true;
+                gameActive = false;
+                stopTimer();
+                statusIcon.innerHTML = "🎉 完全解开！ 🎉";
+                showWinToast();
+                drawCanvas();
+            } else if (hasCross && winFlag) {
+                winFlag = false;
+                gameActive = true;
+                statusIcon.innerHTML = "🔘 未解开";
+                if (!timerInterval) startTimer();
+                drawCanvas();
+            } else if (!hasCross && winFlag === false) {
+                handleVictory();
+            } else {
+                if(!winFlag) statusIcon.innerHTML = "🔘 未解开";
+                drawCanvas();
+            }
+            return true;
+        }
+
+        function undo() { if (!gameActive && winFlag) return; if (historyStack.length > 0 && historyIndex > 0) loadHistorySnapshot(historyIndex - 1); }
+        function redo() { if (!gameActive && winFlag) return; if (historyStack.length > 0 && historyIndex < historyStack.length - 1) loadHistorySnapshot(historyIndex + 1); }
+
+        function resetToOriginal() {
+            for (let i = 0; i < currentNodes.length; i++) {
+                currentNodes[i].x = originalNodes[i].x;
+                currentNodes[i].y = originalNodes[i].y;
+            }
+            winFlag = false;
+            gameActive = true;
+            statusIcon.innerHTML = "🔘 未解开";
+            statusIcon.style.background = "#fae6c3";
+            stopTimer();
+            elapsedSeconds = 0;
+            timerDisplay.innerText = formatTime(0);
+            startTimer();
+            historyStack = [];
+            const initSnap = currentNodes.map(n => ({ x: n.x, y: n.y }));
+            historyStack.push(initSnap);
+            historyIndex = 0;
+            drawCanvas();
+        }
+
+        // 加载关卡（核心切换逻辑）
+        function loadLevel(levelIdx) {
+            if (levelIdx < 0) levelIdx = levels.length - 1;
+            if (levelIdx >= levels.length) levelIdx = 0;
+            currentLevelIdx = levelIdx;
+            const level = levels[currentLevelIdx];
+            currentNodes = level.nodes.map(n => ({ x: n.x, y: n.y }));
+            currentEdges = [...level.edges];
+            originalNodes = level.nodes.map(n => ({ x: n.x, y: n.y }));
+            winFlag = false;
+            gameActive = true;
+            statusIcon.innerHTML = "🔘 未解开";
+            statusIcon.style.background = "#fae6c3";
+            stopTimer();
+            elapsedSeconds = 0;
+            timerDisplay.innerText = formatTime(0);
+            startTimer();
+            historyStack = [];
+            const initSnap = currentNodes.map(n => ({ x: n.x, y: n.y }));
+            historyStack.push(initSnap);
+            historyIndex = 0;
+            levelIndicator.innerText = `第${currentLevelIdx+1}关 · ${level.name}`;
+            // 确保初始有交叉（防御如果有巧合没有交叉则微扰动）
+            if (!hasAnyIntersection()) {
+                for(let i=0;i<currentNodes.length && !hasAnyIntersection();i++){
+                    currentNodes[i].x += (i%2===0? 6 : -6);
+                    currentNodes[i].y += (i%3===0? 5 : -5);
+                    currentNodes[i].x = Math.min(Math.max(currentNodes[i].x, NODE_RADIUS+5), CANVAS_W - NODE_RADIUS-5);
+                    currentNodes[i].y = Math.min(Math.max(currentNodes[i].y, NODE_RADIUS+5), CANVAS_H - NODE_RADIUS-5);
+                }
+                originalNodes = currentNodes.map(n=>({x:n.x,y:n.y}));
+                const fixSnap = currentNodes.map(n=>({x:n.x,y:n.y}));
+                historyStack = [fixSnap];
+                historyIndex = 0;
+            }
+            drawCanvas();
+        }
+
+        function nextLevel() {
+            loadLevel(currentLevelIdx + 1);
+        }
+        function prevLevel() {
+            loadLevel(currentLevelIdx - 1);
+        }
+
+        // 绘图
+        function drawCanvas() {
+            ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+            // 清新淡淡网格
+            ctx.save();
+            ctx.strokeStyle = "#e5dfce";
+            ctx.lineWidth = 1;
+            for (let i = 0; i < CANVAS_W; i += 45) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, CANVAS_H); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(CANVAS_W, i); ctx.stroke();
+            }
+            // 画连线
+            for (let edge of currentEdges) {
+                const p1 = currentNodes[edge[0]];
+                const p2 = currentNodes[edge[1]];
+                if (p1 && p2) {
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = "#e8953a";
+                    ctx.shadowBlur = 2;
+                    ctx.stroke();
+                }
+            }
+            ctx.shadowBlur = 0;
+            // 节点
+            for (let i = 0; i < currentNodes.length; i++) {
+                const n = currentNodes[i];
+                ctx.shadowBlur = 4;
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, NODE_RADIUS, 0, Math.PI*2);
+                ctx.fillStyle = "#FFB66B";
+                ctx.fill();
+                ctx.strokeStyle = "#c2621a";
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, NODE_RADIUS-6, 0, Math.PI*2);
+                ctx.fillStyle = "#FFE2B5";
+                ctx.fill();
+                ctx.fillStyle = "#a34913";
+                ctx.font = `bold ${Math.min(22, NODE_RADIUS-4)}px "Segoe UI"`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(i+1, n.x, n.y);
+                ctx.shadowBlur = 0;
+            }
+            if (winFlag) {
+                ctx.font = "bold 34px 'Segoe UI'";
+                ctx.fillStyle = "#ffbc70";
+                ctx.shadowColor = "#673f18";
+                ctx.shadowBlur = 5;
+                ctx.fillText("★ 解缠成功 ★", CANVAS_W/2-120, 70);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // 拖拽交互
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            let canvasX = (clientX - rect.left) * scaleX;
+            let canvasY = (clientY - rect.top) * scaleY;
+            canvasX = Math.min(Math.max(canvasX, NODE_RADIUS), CANVAS_W - NODE_RADIUS);
+            canvasY = Math.min(Math.max(canvasY, NODE_RADIUS), CANVAS_H - NODE_RADIUS);
+            return { x: canvasX, y: canvasY };
+        }
+
+        function findNodeUnderPointer(x, y) {
+            for (let i = 0; i < currentNodes.length; i++) {
+                const node = currentNodes[i];
+                const dx = node.x - x, dy = node.y - y;
+                if (Math.hypot(dx, dy) <= NODE_RADIUS + 8) return i;
+            }
+            return -1;
+        }
+
+        function onPointerStart(e) {
+            e.preventDefault();
+            if (!gameActive || winFlag) return;
+            const coord = getCanvasCoords(e);
+            const idx = findNodeUnderPointer(coord.x, coord.y);
+            if (idx !== -1) {
+                draggingNode = idx;
+                dragOffsetX = currentNodes[idx].x - coord.x;
+                dragOffsetY = currentNodes[idx].y - coord.y;
+                canvas.setPointerCapture(e.pointerId);
+            }
+        }
+
+        function onPointerMove(e) {
+            if (!gameActive || winFlag || draggingNode === null) return;
+            e.preventDefault();
+            const coord = getCanvasCoords(e);
+            let newX = coord.x + dragOffsetX;
+            let newY = coord.y + dragOffsetY;
+            newX = Math.min(Math.max(newX, NODE_RADIUS), CANVAS_W - NODE_RADIUS);
+            newY = Math.min(Math.max(newY, NODE_RADIUS), CANVAS_H - NODE_RADIUS);
+            currentNodes[draggingNode].x = newX;
+            currentNodes[draggingNode].y = newY;
+            drawCanvas();
+        }
+
+        function onPointerEnd(e) {
+            if (draggingNode === null) return;
+            e.preventDefault();
+            const currentSnap = currentNodes.map(n => ({ x: n.x, y: n.y }));
+            let changed = false;
+            if (historyIndex >= 0 && historyStack[historyIndex]) {
+                const last = historyStack[historyIndex];
+                for (let i=0; i<currentNodes.length; i++) {
+                    if (Math.abs(last[i].x - currentNodes[i].x) > 0.1 || Math.abs(last[i].y - currentNodes[i].y) > 0.1) {
+                        changed = true;
+                        break;
+                    }
+                }
+            } else changed = true;
+            if (changed && gameActive && !winFlag) {
+                if (historyIndex < historyStack.length - 1) historyStack = historyStack.slice(0, historyIndex+1);
+                historyStack.push(currentSnap);
+                if (historyStack.length > MAX_HISTORY) historyStack.shift();
+                historyIndex = historyStack.length - 1;
+                const intersect = hasAnyIntersection();
+                if (!intersect && !winFlag) handleVictory();
+                else drawCanvas();
+            }
+            draggingNode = null;
+            canvas.releasePointerCapture?.(e.pointerId);
+        }
+
+        function attachEvents() {
+            canvas.addEventListener('pointerdown', onPointerStart);
+            canvas.addEventListener('pointermove', onPointerMove);
+            canvas.addEventListener('pointerup', onPointerEnd);
+            canvas.addEventListener('touchstart', (e) => e.preventDefault());
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+
+        // 初始化
+        function initGame() {
+            currentLevelIdx = 0;
+            loadLevel(0);
+            attachEvents();
+            prevLevelBtn.addEventListener('click', () => { prevLevel(); });
+            nextLevelBtn.addEventListener('click', () => { nextLevel(); });
+            restartBtn.addEventListener('click', () => { resetToOriginal(); });
+            undoBtn.addEventListener('click', () => undo());
+            redoBtn.addEventListener('click', () => redo());
+            ruleBtn.addEventListener('click', () => { modal.style.display = 'flex'; });
+            closeModalBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+            modal.addEventListener('click', (e) => { if(e.target === modal) modal.style.display = 'none'; });
+            drawCanvas();
+        }
+
+        initGame();
+    })();
+</script>
+</body>
+</html>
